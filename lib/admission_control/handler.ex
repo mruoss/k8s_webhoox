@@ -10,6 +10,14 @@ defmodule AdmissionControl.Handler do
     end
   end
 
+  @spec generate_handler(
+          Macro.input(),
+          Macro.input(),
+          Macro.input(),
+          Macro.input(),
+          keyword(Macro.input())
+        ) ::
+          Macro.output()
   defp generate_handler(webhook_type, resource, kind, var_name, do: expression) do
     quote bind_quoted: [
             expression: Macro.escape(expression),
@@ -20,6 +28,8 @@ defmodule AdmissionControl.Handler do
           ] do
       quoted_pattern = build_pattern(webhook_type, resource, kind) |> Macro.escape()
 
+      @spec handle(AdmissionControl.AdmissionReview.t(), any()) ::
+              AdmissionControl.AdmissionReview.t()
       def handle(unquote(quoted_pattern) = admission_review, _) do
         var!(unquote(var_name)) = admission_review
         unquote(expression)
@@ -27,16 +37,19 @@ defmodule AdmissionControl.Handler do
     end
   end
 
+  @spec mutate(Macro.input(), Macro.input(), Macro.input(), keyword(Macro.input())) ::
+          Macro.output()
   defmacro mutate(resource, kind \\ nil, var_name, do: expression) do
     quote do: unquote(generate_handler(:mutating, resource, kind, var_name, do: expression))
   end
 
-  @spec validate(any, any, any, [{:do, any}, ...]) ::
-          {:__block__, [], [{:=, [], [...]} | {:__block__, [], [...]}, ...]}
+  @spec validate(Macro.input(), Macro.input(), Macro.input(), keyword(Macro.input())) ::
+          Macro.output()
   defmacro validate(resource, kind \\ nil, var_name, do: expression) do
     quote do: unquote(generate_handler(:validating, resource, kind, var_name, do: expression))
   end
 
+  @spec build_pattern(binary(), binary(), binary() | nil) :: map()
   def build_pattern(webhook_type, resource, nil) do
     admission_review = %{webhook_type: webhook_type, request: %{}}
 
@@ -79,6 +92,8 @@ defmodule AdmissionControl.Handler do
     })
   end
 
+  @spec parse_resource_or_kind(resource_or_kind :: binary()) ::
+          {:ok, {group :: binary(), verison :: binary(), resource_or_kind :: binary()}} | :error
   defp parse_resource_or_kind(resource_or_kind) do
     case String.split(resource_or_kind, "/") do
       [group, version, resource_or_kind] ->
@@ -91,10 +106,4 @@ defmodule AdmissionControl.Handler do
         :error
     end
   end
-
-  def maybe_expand({:@, _, _} = resource_or_kind, env),
-    do: Macro.expand_once(resource_or_kind, env)
-
-  def maybe_expand(resource_or_kind, _env) when is_binary(resource_or_kind),
-    do: resource_or_kind
 end

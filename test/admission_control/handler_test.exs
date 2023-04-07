@@ -45,6 +45,10 @@ defmodule AdmissionControl.HandlerTest do
     validate @pod, admission_review do
       struct!(admission_review, assigns: %{validate: @pod})
     end
+
+    validate "a/b/c/d/e", admission_review do
+      admission_review
+    end
   end
 
   test "handles mutating webhooks" do
