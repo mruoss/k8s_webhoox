@@ -1,32 +1,20 @@
-defmodule AdmissionControl.PlugTest do
+defmodule K8sWebhoox.PlugTest do
   use ExUnit.Case, async: true
   use Plug.Test
 
-  alias AdmissionControl.AdmissionReview
-  alias AdmissionControl.Plug, as: MUT
+  alias K8sWebhoox.AdmissionControl.AdmissionReview
+  alias K8sWebhoox.Plug, as: MUT
 
   describe "init/1" do
-    test "raises if webhook_type is not declared" do
-      assert_raise(CompileError, ~r/requires you to define the :webhook_type option/, fn ->
-        MUT.init(webhook_handler: SomeModule)
-      end)
-    end
-
-    test "raises if webhook_type is not :validating or :mutating" do
-      assert_raise(CompileError, ~r/requires you to define the :webhook_type option/, fn ->
-        MUT.init(webhook_handler: SomeModule, webhook_type: :invalid)
-      end)
-    end
-
     test "raises if webhook_handler is not declared" do
       assert_raise(CompileError, ~r/requires you to set the :webhook_handler option/, fn ->
-        MUT.init(webhook_type: :validating)
+        MUT.init([])
       end)
     end
 
     test "turns webhook_handler into {module, opts} tuple" do
-      opts = MUT.init(webhook_type: :validating, webhook_handler: SomeModule)
-      assert opts.webhook_handler == {SomeModule, []}
+      opts = MUT.init(webhook_handler: SomeModule)
+      assert opts == {SomeModule, []}
     end
 
     defmodule InitTestHandler do
@@ -35,8 +23,8 @@ defmodule AdmissionControl.PlugTest do
     end
 
     test "calls handler's init function if tuple is given" do
-      opts = MUT.init(webhook_type: :validating, webhook_handler: {InitTestHandler, :foo})
-      assert opts.webhook_handler == {InitTestHandler, :bar}
+      opts = MUT.init(webhook_handler: {InitTestHandler, :foo})
+      assert opts == {InitTestHandler, :bar}
     end
   end
 
@@ -54,7 +42,7 @@ defmodule AdmissionControl.PlugTest do
     test "calls the handler and returns plug" do
       response =
         AdmissionControlHelper.webhook_request_conn()
-        |> MUT.call(%{webhook_type: :validation, webhook_handler: {CallTestHandler, []}})
+        |> MUT.call({CallTestHandler, []})
         |> Map.get(:resp_body)
         |> Jason.decode!()
 
@@ -70,10 +58,7 @@ defmodule AdmissionControl.PlugTest do
     test "calls the handler and returns allowed false" do
       response =
         AdmissionControlHelper.webhook_request_conn()
-        |> MUT.call(%{
-          webhook_type: :validation,
-          webhook_handler: {CallTestHandler, [result: :deny]}
-        })
+        |> MUT.call({CallTestHandler, [result: :deny]})
         |> Map.get(:resp_body)
         |> Jason.decode!()
 

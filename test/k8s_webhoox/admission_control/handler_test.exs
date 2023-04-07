@@ -1,5 +1,5 @@
-defmodule AdmissionControl.HandlerTest do
-  alias AdmissionControl.AdmissionReview
+defmodule K8sWebhoox.AdmissionControl.HandlerTest do
+  alias K8sWebhoox.Conn
   use ExUnit.Case, async: true
 
   @pod %{"group" => "", "version" => "v1", "resource" => "pods"}
@@ -9,10 +9,8 @@ defmodule AdmissionControl.HandlerTest do
   @scale_kind_ref "autoscaling/v1/Scale"
   @scale_kind %{"group" => "autoscaling", "version" => "v1", "kind" => "Scale"}
 
-  defmodule TestHander do
-    use AdmissionControl.Handler
-
-    alias AdmissionControl.AdmissionReview
+  defmodule TestHandler do
+    use K8sWebhoox.AdmissionControl.Handler
 
     @pod "v1/pods"
     @resource "example.com/v1/someresources"
@@ -45,43 +43,41 @@ defmodule AdmissionControl.HandlerTest do
     validate @pod, admission_review do
       struct!(admission_review, assigns: %{validate: @pod})
     end
-
-    validate "a/b/c/d/e", admission_review do
-      admission_review
-    end
   end
 
   test "handles mutating webhooks" do
+    opts = TestHandler.init(webhook_type: :mutating)
     request1 = AdmissionControlHelper.webhook_request(@pod)
-    review1 = AdmissionReview.new(request1, :mutating)
-    result = TestHander.call(review1, [])
+    review1 = Conn.new(request1)
+    result = TestHandler.call(review1, opts)
     assert %{mutate: @pod_ref} == result.assigns
 
     request2 = AdmissionControlHelper.webhook_request(@resource, @scale_kind)
-    review2 = AdmissionReview.new(request2, :mutating)
-    result = TestHander.call(review2, [])
+    review2 = Conn.new(request2)
+    result = TestHandler.call(review2, opts)
     assert %{mutate: "#{@resource_ref}##{@scale_kind_ref}"} == result.assigns
 
     request3 = AdmissionControlHelper.webhook_request(@resource)
-    review3 = AdmissionReview.new(request3, :mutating)
-    result = TestHander.call(review3, [])
+    review3 = Conn.new(request3)
+    result = TestHandler.call(review3, opts)
     assert %{mutate: @resource_ref} == result.assigns
   end
 
   test "handles validating webhooks" do
+    opts = TestHandler.init(webhook_type: :validating)
     request1 = AdmissionControlHelper.webhook_request(@pod)
-    review1 = AdmissionReview.new(request1, :validating)
-    result = TestHander.call(review1, [])
+    review1 = Conn.new(request1)
+    result = TestHandler.call(review1, opts)
     assert %{validate: @pod_ref} == result.assigns
 
     request2 = AdmissionControlHelper.webhook_request(@resource, @scale_kind)
-    review2 = AdmissionReview.new(request2, :validating)
-    result = TestHander.call(review2, [])
+    review2 = Conn.new(request2)
+    result = TestHandler.call(review2, opts)
     assert %{validate: "#{@resource_ref}##{@scale_kind_ref}"} == result.assigns
 
     request3 = AdmissionControlHelper.webhook_request(@resource)
-    review3 = AdmissionReview.new(request3, :validating)
-    result = TestHander.call(review3, [])
+    review3 = Conn.new(request3)
+    result = TestHandler.call(review3, opts)
     assert %{validate: @resource_ref} == result.assigns
   end
 end

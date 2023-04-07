@@ -1,11 +1,11 @@
-defmodule AdmissionControl.MixProject do
+defmodule K8sWebhoox.MixProject do
   use Mix.Project
   @version "1.0.0"
-  @source_url "https://github.com/mruoss/admission_control"
+  @source_url "https://github.com/mruoss/k8s_webhoox"
 
   def project do
     [
-      app: :admission_control,
+      app: :k8s_webhoox,
       version: @version,
       elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -54,7 +54,7 @@ defmodule AdmissionControl.MixProject do
 
   defp docs do
     [
-      main: "AdmissionControl.Plug",
+      main: "README",
       assets: "assets",
       source_ref: "v#{@version}",
       source_url: @source_url,

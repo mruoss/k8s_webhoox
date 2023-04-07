@@ -1,9 +1,26 @@
-defmodule AdmissionControl.Handler do
+defmodule K8sWebhoox.AdmissionControl.Handler do
+  @moduledoc """
+  A Helper module for handling admission review requests.
+
+  When `use`d, it turns the using module into a
+  [`Pluggable`](https://hex.pm/packages/pluggable) step which can be used with
+  `K8sWebhoox.AdmissionControl.Plug`. The `:webhook_type` option has to be set
+  to either `:validating` or `:mutating` when initializing the `Pluggable`:
+
+  ```
+  post "/admission-review/validating",
+    to: K8sWebhoox.AdmissionControl.Plug,
+    init_opts: [
+      webhook_handler: {MyOperator.AdmissionControlHandler, webhook_type: :validating}
+    ]
+  ```
+  """
+
   defmacro __using__(_) do
     quote do
-      use Pluggable.StepBuilder
+      use Pluggable.StepBuilder, copy_opts_to_assign: :admission_control_handler
 
-      import AdmissionControl.Handler,
+      import K8sWebhoox.AdmissionControl.Handler,
         only: [mutate: 3, mutate: 4, validate: 3, validate: 4, build_pattern: 3]
 
       step :handle
@@ -28,10 +45,10 @@ defmodule AdmissionControl.Handler do
           ] do
       quoted_pattern = build_pattern(webhook_type, resource, kind) |> Macro.escape()
 
-      @spec handle(AdmissionControl.AdmissionReview.t(), any()) ::
-              AdmissionControl.AdmissionReview.t()
-      def handle(unquote(quoted_pattern) = admission_review, _) do
-        var!(unquote(var_name)) = admission_review
+      @spec handle(K8sWebhoox.Conn.t(), any()) ::
+              K8sWebhoox.Conn.t()
+      def handle(unquote(quoted_pattern) = conn, _) do
+        var!(unquote(var_name)) = conn
         unquote(expression)
       end
     end
@@ -51,7 +68,7 @@ defmodule AdmissionControl.Handler do
 
   @spec build_pattern(binary(), binary(), binary() | nil) :: map()
   def build_pattern(webhook_type, resource, nil) do
-    admission_review = %{webhook_type: webhook_type, request: %{}}
+    conn = %{assigns: %{admission_control_handler: [webhook_type: webhook_type]}, request: %{}}
 
     {group, version, resource} =
       case parse_resource_or_kind(resource) do
@@ -64,7 +81,7 @@ defmodule AdmissionControl.Handler do
           )
       end
 
-    put_in(admission_review.request["resource"], %{
+    put_in(conn.request["resource"], %{
       "group" => group,
       "version" => version,
       "resource" => resource
@@ -72,7 +89,7 @@ defmodule AdmissionControl.Handler do
   end
 
   def build_pattern(webhook_type, resource, kind) do
-    admission_review = build_pattern(webhook_type, resource, nil)
+    conn = build_pattern(webhook_type, resource, nil)
 
     {group, version, kind} =
       case parse_resource_or_kind(kind) do
@@ -85,7 +102,7 @@ defmodule AdmissionControl.Handler do
           )
       end
 
-    put_in(admission_review.request["kind"], %{
+    put_in(conn.request["kind"], %{
       "group" => group,
       "version" => version,
       "kind" => kind
