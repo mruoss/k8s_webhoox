@@ -2,8 +2,10 @@ defmodule K8sWebhoox.PlugTest do
   use ExUnit.Case, async: true
   use Plug.Test
 
-  alias K8sWebhoox.AdmissionControl.AdmissionReview
   alias K8sWebhoox.Plug, as: MUT
+
+  alias K8sWebhoox.AdmissionControl.AdmissionReview
+  alias K8sWebhoox.Test.AdmissionControlHelper
 
   describe "init/1" do
     test "raises if webhook_handler is not declared" do

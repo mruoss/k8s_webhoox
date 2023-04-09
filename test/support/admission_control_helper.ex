@@ -1,6 +1,6 @@
-defmodule AdmissionControlHelper do
+defmodule K8sWebhoox.Test.AdmissionControlHelper do
   @moduledoc false
-  use Plug.Test
+  alias K8sWebhoox.Test.PlugHelepr
 
   @default_resource %{
     "group" => "example.com",
@@ -8,31 +8,24 @@ defmodule AdmissionControlHelper do
     "resource" => "somecrds"
   }
 
-  @default_kind %{
-    "group" => "example.com",
-    "version" => "v1alpha1",
-    "kind" => "SomeCRD"
-  }
-
-  @spec webhook_request_conn(resource :: map(), kind :: map()) :: Plug.Conn.t()
-  def webhook_request_conn(resource \\ @default_resource, kind \\ @default_kind) do
-    body = webhook_request(resource, kind)
-
-    conn("POST", "/webhook", Jason.encode!(body))
-    |> put_req_header("content-type", "application/json")
+  @spec webhook_request_conn(resource :: map(), subresource :: binary() | nil) :: Plug.Conn.t()
+  def webhook_request_conn(resource \\ @default_resource, subresource \\ nil) do
+    body = webhook_request(resource, subresource)
+    PlugHelepr.webhook_request_conn(body)
   end
 
-  @spec webhook_request(resource :: map(), kind :: map()) :: map()
-  def webhook_request(resource \\ @default_resource, kind \\ @default_kind) do
+  @spec webhook_request(resource :: map(), subresource :: binary() | nil) :: map()
+  def webhook_request(resource \\ @default_resource, subresource \\ nil) do
     %{
       "apiVersion" => "admission.k8s.io/v1",
       "kind" => "AdmissionReview",
       "request" => %{
         "uid" => "705ab4f5-6393-11e8-b7cc-42010a800002",
-        "kind" => kind,
+        "kind" => %{},
         "resource" => resource,
-        "requestKind" => kind,
+        "requestKind" => %{},
         "requestResource" => resource,
+        "subResource" => subresource,
         "name" => "my-deployment",
         "namespace" => "my-namespace",
         "operation" => "UPDATE",

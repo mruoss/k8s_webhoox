@@ -1,47 +1,47 @@
 defmodule K8sWebhoox.AdmissionControl.HandlerTest do
-  alias K8sWebhoox.Conn
   use ExUnit.Case, async: true
+
+  alias K8sWebhoox.Conn
+  alias K8sWebhoox.Test.AdmissionControlHelper
 
   @pod %{"group" => "", "version" => "v1", "resource" => "pods"}
   @pod_ref "v1/pods"
   @resource %{"group" => "example.com", "version" => "v1", "resource" => "someresources"}
   @resource_ref "example.com/v1/someresources"
-  @scale_kind_ref "autoscaling/v1/Scale"
-  @scale_kind %{"group" => "autoscaling", "version" => "v1", "kind" => "Scale"}
+  @subresource "scale"
 
   defmodule TestHandler do
     use K8sWebhoox.AdmissionControl.Handler
+    @pod_ref "v1/pods"
+    @resource_ref "example.com/v1/someresources"
+    @subresource "scale"
 
-    @pod "v1/pods"
-    @resource "example.com/v1/someresources"
-    @scale_kind "autoscaling/v1/Scale"
-
-    mutate @pod, admission_review do
-      struct!(admission_review, assigns: %{mutate: @pod})
+    mutate @pod_ref, conn do
+      struct!(conn, assigns: %{mutate: @pod_ref})
     end
 
-    mutate @resource, @scale_kind, admission_review do
-      struct!(admission_review,
-        assigns: %{mutate: "#{@resource}##{@scale_kind}"}
+    mutate @resource_ref, @subresource, conn do
+      struct!(conn,
+        assigns: %{mutate: "#{@resource_ref}##{@subresource}"}
       )
     end
 
-    mutate @resource, admission_review do
-      struct!(admission_review, assigns: %{mutate: @resource})
+    mutate @resource_ref, conn do
+      struct!(conn, assigns: %{mutate: @resource_ref})
     end
 
-    validate @resource, @scale_kind, admission_review do
-      struct!(admission_review,
-        assigns: %{validate: "#{@resource}##{@scale_kind}"}
+    validate @resource_ref, @subresource, conn do
+      struct!(conn,
+        assigns: %{validate: "#{@resource_ref}##{@subresource}"}
       )
     end
 
-    validate @resource, admission_review do
-      struct!(admission_review, assigns: %{validate: @resource})
+    validate @resource_ref, conn do
+      struct!(conn, assigns: %{validate: @resource_ref})
     end
 
-    validate @pod, admission_review do
-      struct!(admission_review, assigns: %{validate: @pod})
+    validate @pod_ref, conn do
+      struct!(conn, assigns: %{validate: @pod_ref})
     end
   end
 
@@ -52,10 +52,10 @@ defmodule K8sWebhoox.AdmissionControl.HandlerTest do
     result = TestHandler.call(review1, opts)
     assert %{mutate: @pod_ref} == result.assigns
 
-    request2 = AdmissionControlHelper.webhook_request(@resource, @scale_kind)
+    request2 = AdmissionControlHelper.webhook_request(@resource, @subresource)
     review2 = Conn.new(request2)
     result = TestHandler.call(review2, opts)
-    assert %{mutate: "#{@resource_ref}##{@scale_kind_ref}"} == result.assigns
+    assert %{mutate: "#{@resource_ref}##{@subresource}"} == result.assigns
 
     request3 = AdmissionControlHelper.webhook_request(@resource)
     review3 = Conn.new(request3)
@@ -70,10 +70,10 @@ defmodule K8sWebhoox.AdmissionControl.HandlerTest do
     result = TestHandler.call(review1, opts)
     assert %{validate: @pod_ref} == result.assigns
 
-    request2 = AdmissionControlHelper.webhook_request(@resource, @scale_kind)
+    request2 = AdmissionControlHelper.webhook_request(@resource, @subresource)
     review2 = Conn.new(request2)
     result = TestHandler.call(review2, opts)
-    assert %{validate: "#{@resource_ref}##{@scale_kind_ref}"} == result.assigns
+    assert %{validate: "#{@resource_ref}##{@subresource}"} == result.assigns
 
     request3 = AdmissionControlHelper.webhook_request(@resource)
     review3 = Conn.new(request3)

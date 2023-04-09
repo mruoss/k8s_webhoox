@@ -19,7 +19,7 @@ defmodule K8sWebhoox.Plug do
     plug :dispatch
 
     post "/admission-review/validating",
-      to: K8sWebhoox.AdmissionControl.Plug,
+      to: K8sWebhoox.Plug,
       init_opts: [
         assigns: [webhook_type: :validating],
         webhook_handler: MyOperator.K8sWebhoox.AdmissionControlHandler
@@ -65,7 +65,7 @@ defmodule K8sWebhoox.Plug do
     will pass the `init_opts` to the `init/1` function of the handler:
     ```
     post "/admission-review/validating",
-      to: K8sWebhoox.AdmissionControl.Plug,
+      to: K8sWebhoox.Plug,
       init_opts: [
         assigns: [webhook_type: :validating],
         webhook_handler: {MyOperator.K8sWebhoox.AdmissionControlHandler, env: env}

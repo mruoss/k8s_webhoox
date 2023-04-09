@@ -55,7 +55,7 @@ defmodule K8sWebhoox do
   In the main container of your deployment, mount a secret as volume. In the
   example below, the secret is called `admission-webhook-cert` and is mounted to
   `/mnt/cert`. The path should correlate to where you load the certificate from
-  in your HTTP Server configuration (see `K8sWebhoox.AdmissionControl.Plug`).
+  in your HTTP Server configuration (see `K8sWebhoox.Plug`).
 
   The secret does not exist at this moment which is why we set `optional: true`:
 

@@ -1,7 +1,7 @@
 defmodule K8sWebhoox.AdmissionControl.AdmissionReview do
   @moduledoc """
   This module defines a struct which is used as token in the `Pluggable`
-  pipeline handling an admission request. See `K8sWebhoox.AdmissionControl.Plug` for more
+  pipeline handling an admission request. See `K8sWebhoox.Plug` for more
   information on how to set up the request handler pipeline.
 
   This module also defines a set of useful helpers when processing an admission
@@ -17,13 +17,13 @@ defmodule K8sWebhoox.AdmissionControl.AdmissionReview do
 
   ## Examples
 
-      iex> admission_review = %K8sWebhoox.Conn{request: %{}, response: %{}, api_version: "", kind: ""}
-      ...> K8sWebhoox.AdmissionControl.AdmissionReview.allow(admission_review)
+      iex> conn = %K8sWebhoox.Conn{request: %{}, response: %{}, api_version: "", kind: ""}
+      ...> K8sWebhoox.AdmissionControl.AdmissionReview.allow(conn)
       %K8sWebhoox.Conn{request: %{}, response: %{"allowed" => true}, api_version: "", kind: ""}
   """
   @spec allow(Conn.t()) :: Conn.t()
-  def allow(admission_review) do
-    put_in(admission_review.response["allowed"], true)
+  def allow(conn) do
+    put_in(conn.response["allowed"], true)
   end
 
   @doc """
@@ -31,13 +31,13 @@ defmodule K8sWebhoox.AdmissionControl.AdmissionReview do
 
   ## Examples
 
-      iex> admission_review = %K8sWebhoox.Conn{request: %{}, response: %{}, api_version: "", kind: ""}
-      ...> K8sWebhoox.AdmissionControl.AdmissionReview.deny(admission_review)
+      iex> conn = %K8sWebhoox.Conn{request: %{}, response: %{}, api_version: "", kind: ""}
+      ...> K8sWebhoox.AdmissionControl.AdmissionReview.deny(conn)
       %K8sWebhoox.Conn{request: %{}, response: %{"allowed" => false}, api_version: "", kind: ""}
   """
   @spec deny(Conn.t()) :: Conn.t()
-  def deny(admission_review) do
-    put_in(admission_review.response["allowed"], false)
+  def deny(conn) do
+    put_in(conn.response["allowed"], false)
   end
 
   @doc """
@@ -45,8 +45,8 @@ defmodule K8sWebhoox.AdmissionControl.AdmissionReview do
 
   ## Examples
 
-      iex> admission_review = %K8sWebhoox.Conn{request: %{}, response: %{}, api_version: "", kind: ""}
-      ...> K8sWebhoox.AdmissionControl.AdmissionReview.deny(admission_review, 403, "foo")
+      iex> conn = %K8sWebhoox.Conn{request: %{}, response: %{}, api_version: "", kind: ""}
+      ...> K8sWebhoox.AdmissionControl.AdmissionReview.deny(conn, 403, "foo")
       %K8sWebhoox.Conn{request: %{}, response: %{"allowed" => false, "status" => %{"code" => 403, "message" => "foo"}}, api_version: "", kind: ""}
 
       iex> K8sWebhoox.AdmissionControl.AdmissionReview.deny(%K8sWebhoox.Conn{request: %{}, response: %{}, api_version: "", kind: ""}, "foo")
@@ -54,8 +54,8 @@ defmodule K8sWebhoox.AdmissionControl.AdmissionReview do
   """
   @spec deny(Conn.t(), integer(), binary()) :: Conn.t()
   @spec deny(Conn.t(), binary()) :: Conn.t()
-  def deny(admission_review, code \\ 400, message) do
-    admission_review
+  def deny(conn, code \\ 400, message) do
+    conn
     |> deny()
     |> put_in([Access.key(:response), "status"], %{"code" => code, "message" => message})
   end
@@ -65,18 +65,18 @@ defmodule K8sWebhoox.AdmissionControl.AdmissionReview do
 
   ## Examples
 
-      iex> admission_review = %K8sWebhoox.Conn{request: %{}, response: %{}, api_version: "", kind: ""}
-      ...> K8sWebhoox.AdmissionControl.AdmissionReview.add_warning(admission_review, "warning")
+      iex> conn = %K8sWebhoox.Conn{request: %{}, response: %{}, api_version: "", kind: ""}
+      ...> K8sWebhoox.AdmissionControl.AdmissionReview.add_warning(conn, "warning")
       %K8sWebhoox.Conn{request: %{}, response: %{"warnings" => ["warning"]}, api_version: "", kind: ""}
 
-      iex> admission_review = %K8sWebhoox.Conn{request: %{}, response: %{"warnings" => ["existing_warning"]}, api_version: "", kind: ""}
-      ...> K8sWebhoox.AdmissionControl.AdmissionReview.add_warning(admission_review, "new_warning")
+      iex> conn = %K8sWebhoox.Conn{request: %{}, response: %{"warnings" => ["existing_warning"]}, api_version: "", kind: ""}
+      ...> K8sWebhoox.AdmissionControl.AdmissionReview.add_warning(conn, "new_warning")
       %K8sWebhoox.Conn{request: %{}, response: %{"warnings" => ["new_warning", "existing_warning"]}, api_version: "", kind: ""}
   """
   @spec add_warning(Conn.t(), binary()) :: Conn.t()
-  def add_warning(admission_review, warning) do
+  def add_warning(conn, warning) do
     update_in(
-      admission_review,
+      conn,
       [Access.key(:response), Access.key("warnings", [])],
       &[warning | &1]
     )
@@ -88,22 +88,22 @@ defmodule K8sWebhoox.AdmissionControl.AdmissionReview do
 
   ## Examples
 
-      iex> admission_review = %K8sWebhoox.Conn{request: %{"object" => %{"spec" => %{"immutable" => "value"}}, "oldObject" => %{"spec" => %{"immutable" => "value"}}}, response: %{}, api_version: "", kind: ""}
-      ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_immutable(admission_review, ["spec", "immutable"])
+      iex> conn = %K8sWebhoox.Conn{request: %{"object" => %{"spec" => %{"immutable" => "value"}}, "oldObject" => %{"spec" => %{"immutable" => "value"}}}, response: %{}, api_version: "", kind: ""}
+      ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_immutable(conn, ["spec", "immutable"])
       %K8sWebhoox.Conn{request: %{"object" => %{"spec" => %{"immutable" => "value"}}, "oldObject" => %{"spec" => %{"immutable" => "value"}}}, response: %{}, api_version: "", kind: ""}
 
-      iex> admission_review = %K8sWebhoox.Conn{request: %{"object" => %{"spec" => %{"immutable" => "new_value"}}, "oldObject" => %{"spec" => %{"immutable" => "value"}}}, response: %{}, api_version: "", kind: ""}
-      ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_immutable(admission_review, ["spec", "immutable"])
+      iex> conn = %K8sWebhoox.Conn{request: %{"object" => %{"spec" => %{"immutable" => "new_value"}}, "oldObject" => %{"spec" => %{"immutable" => "value"}}}, response: %{}, api_version: "", kind: ""}
+      ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_immutable(conn, ["spec", "immutable"])
       %K8sWebhoox.Conn{request: %{"object" => %{"spec" => %{"immutable" => "new_value"}}, "oldObject" => %{"spec" => %{"immutable" => "value"}}}, response: %{"allowed" => false, "status" => %{"code" => 400, "message" => "The field .spec.immutable is immutable."}}, api_version: "", kind: ""}
   """
   @spec check_immutable(Conn.t(), list()) :: Conn.t()
-  def check_immutable(admission_review, field) do
-    new_value = get_in(admission_review.request, ["object" | field])
-    old_value = get_in(admission_review.request, ["oldObject" | field])
+  def check_immutable(conn, field) do
+    new_value = get_in(conn.request, ["object" | field])
+    old_value = get_in(conn.request, ["oldObject" | field])
 
     if new_value == old_value,
-      do: admission_review,
-      else: deny(admission_review, "The field .#{Enum.join(field, ".")} is immutable.")
+      do: conn,
+      else: deny(conn, "The field .#{Enum.join(field, ".")} is immutable.")
   end
 
   @doc """
@@ -112,27 +112,27 @@ defmodule K8sWebhoox.AdmissionControl.AdmissionReview do
 
   ## Examples
 
-      iex> admission_review = %K8sWebhoox.Conn{request: %{"object" => %{"metadata" => %{"annotations" => %{"some/annotation" => "bar"}}, "spec" => %{}}, "oldObject" => %{"spec" => %{}}}, response: %{}, api_version: "", kind: ""}
-      ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_allowed_values(admission_review, ~w(metadata annotations some/annotation), ["foo", "bar"])
+      iex> conn = %K8sWebhoox.Conn{request: %{"object" => %{"metadata" => %{"annotations" => %{"some/annotation" => "bar"}}, "spec" => %{}}, "oldObject" => %{"spec" => %{}}}, response: %{}, api_version: "", kind: ""}
+      ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_allowed_values(conn, ~w(metadata annotations some/annotation), ["foo", "bar"])
       %K8sWebhoox.Conn{request: %{"object" => %{"metadata" => %{"annotations" => %{"some/annotation" => "bar"}}, "spec" => %{}}, "oldObject" => %{"spec" => %{}}}, response: %{}, api_version: "", kind: ""}
 
-      iex> admission_review = %K8sWebhoox.Conn{request: %{"object" => %{"metadata" => %{}, "spec" => %{}}, "oldObject" => %{"spec" => %{}}}, response: %{}, api_version: "", kind: ""}
-      ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_allowed_values(admission_review, ~w(metadata annotations some/annotation), ["foo", "bar"])
+      iex> conn = %K8sWebhoox.Conn{request: %{"object" => %{"metadata" => %{}, "spec" => %{}}, "oldObject" => %{"spec" => %{}}}, response: %{}, api_version: "", kind: ""}
+      ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_allowed_values(conn, ~w(metadata annotations some/annotation), ["foo", "bar"])
       %K8sWebhoox.Conn{request: %{"object" => %{"metadata" => %{}, "spec" => %{}}, "oldObject" => %{"spec" => %{}}}, response: %{}, api_version: "", kind: ""}
 
-      iex> admission_review = %K8sWebhoox.Conn{request: %{"object" => %{"metadata" => %{"annotations" => %{"some/annotation" => "other"}}, "spec" => %{}}, "oldObject" => %{"spec" => %{}}}, response: %{}, api_version: "", kind: ""}
-      ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_allowed_values(admission_review, ~w(metadata annotations some/annotation), ["foo", "bar"])
+      iex> conn = %K8sWebhoox.Conn{request: %{"object" => %{"metadata" => %{"annotations" => %{"some/annotation" => "other"}}, "spec" => %{}}, "oldObject" => %{"spec" => %{}}}, response: %{}, api_version: "", kind: ""}
+      ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_allowed_values(conn, ~w(metadata annotations some/annotation), ["foo", "bar"])
       %K8sWebhoox.Conn{request: %{"object" => %{"metadata" => %{"annotations" => %{"some/annotation" => "other"}}, "spec" => %{}}, "oldObject" => %{"spec" => %{}}}, response: %{"allowed" => false, "status" => %{"code" => 400, "message" => ~S(The field .metadata.annotations.some/annotation must contain one of the values in ["foo", "bar"] but it's currently set to "other".)}}, api_version: "", kind: ""}
   """
   @spec check_allowed_values(Conn.t(), list(), list()) :: Conn.t()
-  def check_allowed_values(admission_review, field, allowed_values) do
-    value = get_in(admission_review.request, ["object" | field])
+  def check_allowed_values(conn, field, allowed_values) do
+    value = get_in(conn.request, ["object" | field])
 
     if is_nil(value) or value in allowed_values,
-      do: admission_review,
+      do: conn,
       else:
         deny(
-          admission_review,
+          conn,
           "The field .metadata.annotations.some/annotation must contain one of the values in #{inspect(allowed_values)} but it's currently set to #{inspect(value)}."
         )
   end
