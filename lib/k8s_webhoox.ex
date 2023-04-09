@@ -224,6 +224,8 @@ defmodule K8sWebhoox do
           ~w(spec conversion webhook clientConfig caBundle),
           ca_bundle_base_64
         )
+        |> Map.put("apiVersion", @crd_api_version)
+        |> Map.put("kind", "CustomResourceDefinition")
         |> Map.update!("metadata", &Map.delete(&1, "managedFields"))
       end)
       |> Stream.each(&apply_resource(conn, &1))
@@ -347,6 +349,8 @@ defmodule K8sWebhoox do
 
       {:error, %K8s.Client.APIError{reason: "AlreadyExists"}} ->
         # Looks like another pod was faster. Let's just start over:
+
+        # coveralls-ignore-next-line
         get_or_create_cert_bundle(
           conn,
           service_namespace,
