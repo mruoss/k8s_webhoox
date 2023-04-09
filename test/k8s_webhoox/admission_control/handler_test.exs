@@ -80,4 +80,16 @@ defmodule K8sWebhoox.AdmissionControl.HandlerTest do
     result = TestHandler.call(review3, opts)
     assert %{validate: @resource_ref} == result.assigns
   end
+
+  test "raises if gvk is invalid" do
+    assert_raise(CompileError, fn ->
+      defmodule ErronousHandler do
+        use K8sWebhoox.AdmissionControl.Handler
+
+        mutate "a/b/c/d", conn do
+          conn
+        end
+      end
+    end)
+  end
 end

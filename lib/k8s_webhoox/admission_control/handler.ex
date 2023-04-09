@@ -39,7 +39,7 @@ defmodule K8sWebhoox.AdmissionControl.Handler do
       use Pluggable.StepBuilder, copy_opts_to_assign: :admission_control_handler
 
       import K8sWebhoox.AdmissionControl.Handler,
-        only: [mutate: 3, mutate: 4, validate: 3, validate: 4, build_pattern: 3]
+        only: [mutate: 3, mutate: 4, validate: 3, validate: 4, build_pattern: 4]
 
       step :handle
     end
@@ -51,18 +51,20 @@ defmodule K8sWebhoox.AdmissionControl.Handler do
           Macro.input(),
           Macro.input(),
           Macro.input(),
+          env :: Macro.Env.t(),
           keyword(Macro.input())
         ) ::
           Macro.output()
-  defp generate_handler(webhook_type, resource, subresource, conn_var, do: expression) do
+  defp generate_handler(webhook_type, resource, subresource, conn_var, env, do: expression) do
     quote bind_quoted: [
             expression: Macro.escape(expression),
             subresource: subresource,
             resource: resource,
             conn_var: Macro.escape(conn_var),
-            webhook_type: webhook_type
+            webhook_type: webhook_type,
+            env: Macro.escape(env)
           ] do
-      quoted_pattern = build_pattern(webhook_type, resource, subresource) |> Macro.escape()
+      quoted_pattern = build_pattern(webhook_type, resource, subresource, env) |> Macro.escape()
 
       @spec handle(K8sWebhoox.Conn.t(), any()) ::
               K8sWebhoox.Conn.t()
@@ -103,7 +105,9 @@ defmodule K8sWebhoox.AdmissionControl.Handler do
           Macro.output()
   defmacro mutate(resource, subresource \\ nil, conn_var, do: expression) do
     quote do
-      unquote(generate_handler(:mutating, resource, subresource, conn_var, do: expression))
+      unquote(
+        generate_handler(:mutating, resource, subresource, conn_var, __ENV__, do: expression)
+      )
     end
   end
 
@@ -148,49 +152,38 @@ defmodule K8sWebhoox.AdmissionControl.Handler do
           Macro.output()
   defmacro validate(resource, subresource \\ nil, conn_var, do: expression) do
     quote do
-      unquote(generate_handler(:validating, resource, subresource, conn_var, do: expression))
+      unquote(
+        generate_handler(:validating, resource, subresource, conn_var, __ENV__, do: expression)
+      )
     end
   end
 
-  @spec build_pattern(binary(), binary(), binary() | nil) :: map()
-  def build_pattern(webhook_type, resource, nil) do
-    conn = %{assigns: %{admission_control_handler: [webhook_type: webhook_type]}, request: %{}}
+  @spec build_pattern(binary(), binary(), binary() | nil, Macro.Env.t()) :: map()
+  def build_pattern(webhook_type, resource, nil, env) do
+    resource =
+      case String.split(resource, "/") do
+        [group, version, resource] ->
+          %{"group" => group, "version" => version, "resource" => String.downcase(resource)}
 
-    {group, version, resource} =
-      case parse_resource(resource) do
-        {:ok, gvk} ->
-          gvk
+        [version, resource] ->
+          %{"group" => "", "version" => version, "resource" => String.downcase(resource)}
 
-        :error ->
-          raise(
-            ~s(resource has to be given in the form group/version/plural, e.g. example.com/v1/someresources or v1/pods)
-          )
+        _ ->
+          raise CompileError,
+            file: env.file,
+            line: env.line,
+            description:
+              ~s(resource has to be given in the form group/version/plural, e.g. example.com/v1/someresources or v1/pods. You passed "#{resource}")
       end
 
-    put_in(conn.request["resource"], %{
-      "group" => group,
-      "version" => version,
-      "resource" => resource
-    })
+    %{
+      assigns: %{admission_control_handler: [webhook_type: webhook_type]},
+      request: %{"resource" => resource}
+    }
   end
 
-  def build_pattern(webhook_type, resource, subresource) do
-    conn = build_pattern(webhook_type, resource, nil)
+  def build_pattern(webhook_type, resource, subresource, env) do
+    conn = build_pattern(webhook_type, resource, nil, env)
     put_in(conn.request["subResource"], subresource)
-  end
-
-  @spec parse_resource(resource :: binary()) ::
-          {:ok, {group :: binary(), verison :: binary(), resource :: binary()}} | :error
-  defp parse_resource(resource) do
-    case String.split(resource, "/") do
-      [group, version, resource] ->
-        {:ok, {group, version, String.downcase(resource)}}
-
-      [version, resource] ->
-        {:ok, {"", version, String.downcase(resource)}}
-
-      _ ->
-        :error
-    end
   end
 end
