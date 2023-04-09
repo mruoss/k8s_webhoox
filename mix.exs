@@ -6,6 +6,7 @@ defmodule K8sWebhoox.MixProject do
   def project do
     [
       app: :k8s_webhoox,
+      description: description(),
       version: @version,
       elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -13,7 +14,8 @@ defmodule K8sWebhoox.MixProject do
       deps: deps(),
       preferred_cli_env: cli_env(),
       test_coverage: [tool: ExCoveralls],
-      docs: docs()
+      docs: docs(),
+      package: package()
     ]
   end
 
@@ -70,4 +72,23 @@ defmodule K8sWebhoox.MixProject do
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
+
+  defp package do
+    [
+      name: :k8s_webhoox,
+      maintainers: ["Michael Ruoss"],
+      licenses: ["Apache"],
+      links: %{
+        "Changelog" => "#{@source_url}/blob/main/CHANGELOG.md",
+        "GitHub" => @source_url
+      },
+      files: ["lib", "mix.exs", "README.md", "LICENSE", "CHANGELOG.md"]
+    ]
+  end
+
+  defp description do
+    """
+    Kubernetes Webhooks SDK for Elixir.
+    """
+  end
 end
