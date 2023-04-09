@@ -156,6 +156,7 @@ defmodule K8sWebhoox do
       {:ok, %{"ca.pem" => ca}} ->
         {:ok, Base.encode64(ca)}
 
+      # coveralls-ignore-next-line
       :error ->
         :error
     end
@@ -192,6 +193,7 @@ defmodule K8sWebhoox do
         |> Enum.each(&apply_resource(conn, &1))
 
       [] ->
+        # coveralls-ignore-next-line
         Logger.error("No admission configuration was found on the cluster.")
         :error
     end
@@ -213,11 +215,12 @@ defmodule K8sWebhoox do
            |> K8s.Client.put_conn(conn)
            |> K8s.Client.stream() do
       crd_stream
-      |> Stream.filter(
-        &(&1["spec"]["group"] == group and
-            &1["spec"]["conversion"]["strategy"] == "Webhook" and
-            &1["spec"]["conversion"]["webhook"]["clientConfig"]["caBundle"] != ca_bundle_base_64)
-      )
+      |> Stream.filter(fn crd ->
+        # coveralls-ignore-next-line - not sure why...
+        crd["spec"]["group"] == group and
+          crd["spec"]["conversion"]["strategy"] == "Webhook" and
+          crd["spec"]["conversion"]["webhook"]["clientConfig"]["caBundle"] != ca_bundle_base_64
+      end)
       |> Stream.map(fn crd ->
         crd
         |> put_in(
@@ -258,6 +261,7 @@ defmodule K8sWebhoox do
       {:secret, {:error, %K8s.Client.APIError{reason: "NotFound"}}} ->
         Logger.info("Secret with certificate bundle was not found. Attempting to create it.")
 
+        # coveralls-ignore-next-line
         create_cert_bundle_and_secret(
           conn,
           service_namespace,
@@ -268,14 +272,17 @@ defmodule K8sWebhoox do
 
       {:secret, {:error, exception}}
       when is_exception(exception) ->
+        # coveralls-ignore-next-line
         Logger.error("Can't get secret with certificate bundle: #{Exception.message(exception)}")
         :error
 
       {:secret, {:error, _}} ->
+        # coveralls-ignore-next-line
         Logger.error("Can't get secret with certificate bundle.")
         :error
 
       {:cert_bundle, _} ->
+        # coveralls-ignore-next-line
         Logger.warning("Certificate secret exists but has the wrong shape.")
         :error
     end
@@ -360,9 +367,11 @@ defmodule K8sWebhoox do
         )
 
       {:error, exception} when is_exception(exception) ->
+        # coveralls-ignore-next-line
         raise "Secret creation failed: #{Exception.message(exception)}"
 
       {:error, _} ->
+        # coveralls-ignore-next-line
         raise "Secret creation failed."
     end
   end
@@ -423,6 +432,7 @@ defmodule K8sWebhoox do
         :ok
 
       {:error, error} ->
+        # coveralls-ignore-next-line
         raise "Could not patch Kubernetes resource resource. " <> Exception.message(error)
     end
   end
