@@ -21,8 +21,7 @@ defmodule K8sWebhoox.Plug do
     post "/admission-review/validating",
       to: K8sWebhoox.Plug,
       init_opts: [
-        assigns: [webhook_type: :validating],
-        webhook_handler: MyOperator.K8sWebhoox.AdmissionControlHandler
+        webhook_handler: {MyOperator.K8sWebhoox.AdmissionControlHandler, webhook_type: :validating}
       ]
   end
   ```
@@ -56,19 +55,17 @@ defmodule K8sWebhoox.Plug do
 
   ## Options
 
-  The plug has to be initialized with to mandatory options:
+  The plug has to be initialized with to mandatory option `webhook_handler`:
 
-  - `webhook_type` - The type of the webhook. Has to be `:mutating` or
-    `:validating`
   - `webhook_handler` - The `Pluggable` handling the admission request. Can be a
-    module or a tuple in the form `{Handler.Module, init_opts]}`. The latter
+    module or a tuple in the form `{Handler.Module, init_opts}`. The latter
     will pass the `init_opts` to the `init/1` function of the handler:
+
     ```
-    post "/admission-review/validating",
+    post "/k8s-webhook",
       to: K8sWebhoox.Plug,
       init_opts: [
-        assigns: [webhook_type: :validating],
-        webhook_handler: {MyOperator.K8sWebhoox.AdmissionControlHandler, env: env}
+        webhook_handler: {MyOperator.K8sWebhoox.RequestHandler, env: env}
       ]
     ```
   """
