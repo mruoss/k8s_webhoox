@@ -34,7 +34,7 @@ defmodule K8sWebhoox.ResourceConversion.HandlerTest do
     end
 
     def convert(
-          %{"apiVersion" => "example.com/v1alpha1", "kind" => @first_kind} = object,
+          %{"apiVersion" => "example.com/v1alpha1", "kind" => @first_kind},
           @desired_api_version
         ) do
       {:error, "Can't convert v1alpha1 to v1"}

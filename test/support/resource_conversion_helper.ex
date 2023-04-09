@@ -2,18 +2,6 @@ defmodule K8sWebhoox.Test.ResourceConversionHelper do
   @moduledoc false
   use Plug.Test
 
-  @default_resource %{
-    "group" => "example.com",
-    "version" => "v1alpha1",
-    "resource" => "somecrds"
-  }
-
-  @default_kind %{
-    "group" => "example.com",
-    "version" => "v1alpha1",
-    "kind" => "SomeCRD"
-  }
-
   @spec webhook_request(api_version :: binary(), objects :: list(map())) :: map()
   def webhook_request(desired_api_version, objects) do
     %{
