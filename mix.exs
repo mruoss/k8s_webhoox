@@ -56,7 +56,7 @@ defmodule K8sWebhoox.MixProject do
 
   defp docs do
     [
-      main: "README",
+      main: "readme",
       assets: "assets",
       source_ref: "v#{@version}",
       source_url: @source_url,

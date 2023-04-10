@@ -23,11 +23,13 @@ defmodule K8sWebhoox.AdmissionControl.Handler do
 
     alias K8sWebhoox.AdmissionControl.AdmissionReview
 
-    mutate "v1/pods", conn do
+    # Mutate someresources resource
+    mutate "example.com/v1/someresources", conn do
       AdmissionReview.deny(conn)
     end
 
-    validate "example.com/v1/SomeResource", "scale", conn do
+    # Validate the sacle subresource of a pod
+    validate "v1/pods", "scale", conn do
       conn
     end
   end
