@@ -296,6 +296,21 @@ defmodule K8sWebhoox do
     |> K8s.Client.run()
   end
 
+  defp renew_cert?(pem) do
+    {:Validity, _from, {:utcTime, to}} =
+      pem
+      |> X509.Certificate.from_pem!()
+      |> X509.Certificate.validity()
+
+    reference =
+      DateTime.utc_now()
+      |> DateTime.add(30, :day)
+      |> Calendar.strftime("%y%m%d%H%M%SZ")
+      |> String.to_charlist()
+
+    to < reference
+  end
+
   @spec decode_secret(secret :: map()) :: map()
   defp decode_secret(secret) do
     Map.new(secret["data"], fn {key, value} -> {key, Base.decode64!(value)} end)
