@@ -25,7 +25,7 @@ end
 
 In order to process Kubernetes webhook requests, your endpoint needs TLS
 termination. You can use the `K8sWebhoox` helper module to bootstrap TLS using
-an `initContainer`. Once the certificates are generated and mouned (e.g. to
+an `initContainer`. Once the certificates are generated and mounted (e.g. to
 `/mnt/cert/cert.pem` and `/mnt/cert/key.pem`), you can initialize
 [`Bandit`](https://github.com/mtrudel/bandit) or
 [`Cowboy`](https://github.com/ninenines/cowboy) in your `application.ex` to
