@@ -33,17 +33,14 @@ serve your webhook requests via HTTPS:
 
 ```elixir
 defmodule MyOperator.Application do
-  @k8s_webhoox_server_opts [
-    port: 4000,
-    transport_options: [
-      certfile: "/mnt/cert/cert.pem",
-      keyfile: "/mnt/cert/key.pem"
-    ]
-  ]
-
   def start(_type, env: env) do
     children = [
-      {Bandit, plug: MyOperator.Router, scheme: :https, options: @k8s_webhoox_server_opts}
+      {Bandit,
+       plug: MyOperator.Router,
+       port: 4000,
+       certfile: "/mnt/cert/cert.pem",
+       keyfile: "/mnt/cert/key.pem",
+       scheme: :https}
     ]
 
     opts = [strategy: :one_for_one, name: MyOperator.Supervisor]
