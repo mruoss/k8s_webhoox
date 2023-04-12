@@ -1,7 +1,9 @@
 defmodule K8sWebhooxTest do
   use ExUnit.Case, async: true
+
   alias K8sWebhoox, as: MUT
 
+  import ExUnit.CaptureLog
   import YamlElixir.Sigil
 
   setup_all do
@@ -12,6 +14,10 @@ defmodule K8sWebhooxTest do
 
     on_exit(fn ->
       K8s.Client.delete("v1", "Secret", namespace: "default", name: "tls-certificates")
+      |> K8s.Client.put_conn(conn)
+      |> K8s.Client.run()
+
+      K8s.Client.delete("v1", "Secret", namespace: "default", name: "tls-certificates-validity")
       |> K8s.Client.put_conn(conn)
       |> K8s.Client.run()
 
@@ -33,7 +39,7 @@ defmodule K8sWebhooxTest do
 
   describe "ensure_certifiates/5" do
     @tag :integration
-    test "should generate the cert secret", %{conn: conn} do
+    test "generates the cert secret", %{conn: conn} do
       result =
         MUT.ensure_certificates(
           conn,
@@ -61,7 +67,7 @@ defmodule K8sWebhooxTest do
     end
 
     @tag :integration
-    test "should return the caBundle from the existing secret", %{conn: conn} do
+    test "returns the ca_bundle from the existing secret", %{conn: conn} do
       {:ok, ca_bundle} =
         MUT.ensure_certificates(
           conn,
@@ -79,6 +85,73 @@ defmodule K8sWebhooxTest do
           "default",
           "tls-certificates"
         )
+    end
+
+    @tag :integration
+    test "renews the cert if invalid", %{conn: conn} do
+      {:ok, _} =
+        MUT.ensure_certificates(
+          conn,
+          "default",
+          "k8s-webhoox-test",
+          "default",
+          "tls-certificates-validity",
+          validity: 10
+        )
+
+      {:ok, %{"data" => %{"cert.pem" => cert_pem}}} =
+        K8s.Client.get("v1", "Secret", namespace: "default", name: "tls-certificates-validity")
+        |> K8s.Client.put_conn(conn)
+        |> K8s.Client.run()
+
+      validity =
+        cert_pem
+        |> Base.decode64!()
+        |> X509.Certificate.from_pem!()
+        |> X509.Certificate.validity()
+
+      assert {:Validity, {:utcTime, from}, {:utcTime, to}} = validity
+
+      ts_to_int =
+        &(&1
+          |> Enum.take(12)
+          |> List.to_string()
+          |> String.to_integer())
+
+      assert ts_to_int.(to) - ts_to_int.(from) == 10_000_500
+
+      fun = fn ->
+        MUT.ensure_certificates(
+          conn,
+          "default",
+          "k8s-webhoox-test",
+          "default",
+          "tls-certificates-validity"
+        )
+      end
+
+      assert(capture_log(fun) =~ "Certificate is too old. Renewing it")
+
+      {:ok, %{"data" => %{"cert.pem" => cert_pem}}} =
+        K8s.Client.get("v1", "Secret", namespace: "default", name: "tls-certificates-validity")
+        |> K8s.Client.put_conn(conn)
+        |> K8s.Client.run()
+
+      validity =
+        cert_pem
+        |> Base.decode64!()
+        |> X509.Certificate.from_pem!()
+        |> X509.Certificate.validity()
+
+      assert {:Validity, {:utcTime, from}, {:utcTime, to}} = validity
+
+      ts_to_int =
+        &(&1
+          |> Enum.take(12)
+          |> List.to_string()
+          |> String.to_integer())
+
+      assert ts_to_int.(to) - ts_to_int.(from) > 10_000_500
     end
   end
 
