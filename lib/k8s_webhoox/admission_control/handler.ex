@@ -97,7 +97,7 @@ defmodule K8sWebhoox.AdmissionControl.Handler do
   Validating the `scale` subresource:
 
   ```
-  mutate "example.com/v1/myresources", "scale", conn do
+  mutate "v1/pod", "scale", conn do
     # your mutations
     conn
   end
@@ -141,7 +141,7 @@ defmodule K8sWebhoox.AdmissionControl.Handler do
   You can use the `K8sWebhoox.AdmissionControl.AdmissionReview` helper module to
   validate the request:
   ```
-  validate "example.com/v1/myresources", "scale", conn do
+  validate "v1/pod", "scale", conn do
     # the "some_label" is immutable
     K8sWebhoox.AdmissionControl.AdmissionReview.check_immutable(
       conn,
@@ -160,6 +160,7 @@ defmodule K8sWebhoox.AdmissionControl.Handler do
     end
   end
 
+  @doc false
   @spec build_pattern(binary(), binary(), binary() | nil, Macro.Env.t()) :: map()
   def build_pattern(webhook_type, resource, nil, env) do
     resource =
