@@ -98,13 +98,13 @@ defmodule MyOperator.AdmissionControlHandler do
 
   alias K8sWebhoox.AdmissionControl.AdmissionReview
 
-  mutate "v1/pods", conn do
-    # mutate the conn
-    conn
+  # Mutate someresources resource
+  mutate "example.com/v1/someresources", conn do
+    AdmissionReview.deny(conn)
   end
 
-  validate "example.com/v1/SomeResource", "scale", conn do
-    # validate the request
+  # Validate the sacle subresource of a pod
+  validate "v1/pods", "scale", conn do
     # Use the helper functions defined in `K8sWebhoox.AdmissionControl.AdmissionReview`.
     conn
   end
