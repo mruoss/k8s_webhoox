@@ -127,6 +127,7 @@ defmodule K8sWebhoox do
 
   @crd_api_version "apiextensions.k8s.io/v1"
   @admission_webhook_config_api_version "admissionregistration.k8s.io/v1"
+  @default_validity_days 365 + 30
 
   @doc """
   Gets the certificate bundle from the Kubernetes Secret. Creates new
@@ -137,21 +138,24 @@ defmodule K8sWebhoox do
           service_namespace :: binary(),
           service_name :: binary(),
           secret_namespace :: binary(),
-          secret_name :: binary()
+          secret_name :: binary(),
+          opts :: keyword()
         ) :: :error | {:ok, binary()}
   def ensure_certificates(
         conn,
         service_namespace,
         service_name,
         secret_namespace,
-        secret_name
+        secret_name,
+        opts \\ []
       ) do
     case get_or_create_cert_bundle(
            conn,
            service_namespace,
            service_name,
            secret_namespace,
-           secret_name
+           secret_name,
+           opts
          ) do
       {:ok, %{"ca.pem" => ca}} ->
         {:ok, Base.encode64(ca)}
@@ -241,21 +245,25 @@ defmodule K8sWebhoox do
           service_namespace :: binary(),
           service_name :: binary(),
           secret_namespace :: binary(),
-          secret_name :: binary()
+          secret_name :: binary(),
+          opts :: keyword()
         ) :: {:ok, map()} | :error
   defp get_or_create_cert_bundle(
          conn,
          service_namespace,
          service_name,
          secret_namespace,
-         secret_name
+         secret_name,
+         opts
        ) do
     with {:secret, {:ok, secret}} <-
            {:secret, get_secret(conn, secret_namespace, secret_name)},
          {:cert_bundle,
           %{"key.pem" => _key, "cert.pem" => _cert, "ca_key.pem" => _ca_key, "ca.pem" => _ca} =
             cert_bundle} <-
-           {:cert_bundle, decode_secret(secret)} do
+           {:cert_bundle, decode_secret(secret)},
+         {:cert_too_old, _, _, false} <-
+           {:cert_too_old, secret, cert_bundle, cert_too_old?(cert_bundle["cert.pem"])} do
       {:ok, cert_bundle}
     else
       {:secret, {:error, %K8s.Client.APIError{reason: "NotFound"}}} ->
@@ -267,8 +275,25 @@ defmodule K8sWebhoox do
           service_namespace,
           service_name,
           secret_namespace,
-          secret_name
+          secret_name,
+          Keyword.get(opts, :validity, @default_validity_days)
         )
+
+      {:cert_too_old, cert_secret, cert_bundle, true} ->
+        Logger.info("Certificate is too old. Renewing it")
+
+        renewed_cert_bundle =
+          renew_cert_bundle(
+            cert_bundle,
+            Keyword.get(opts, :validity, @default_validity_days)
+          )
+
+        cert_secret
+        |> Map.delete("data")
+        |> Map.put("stringData", renewed_cert_bundle)
+        |> then(&apply_resource(conn, &1))
+
+        {:ok, renewed_cert_bundle}
 
       {:secret, {:error, exception}}
       when is_exception(exception) ->
@@ -296,7 +321,8 @@ defmodule K8sWebhoox do
     |> K8s.Client.run()
   end
 
-  defp renew_cert?(pem) do
+  @spec cert_too_old?(pem :: binary()) :: boolean()
+  defp cert_too_old?(pem) do
     {:Validity, _from, {:utcTime, to}} =
       pem
       |> X509.Certificate.from_pem!()
@@ -321,14 +347,16 @@ defmodule K8sWebhoox do
           service_namespace :: binary(),
           service_name :: binary(),
           secret_namespace :: binary(),
-          secret_name :: binary()
+          secret_name :: binary(),
+          validity :: integer()
         ) :: {:ok, map()}
   defp create_cert_bundle_and_secret(
          conn,
          service_namespace,
          service_name,
          secret_namespace,
-         secret_name
+         secret_name,
+         validity
        ) do
     ca_key = X509.PrivateKey.new_ec(:secp256r1)
 
@@ -355,7 +383,8 @@ defmodule K8sWebhoox do
               "#{service_name}.#{service_namespace}",
               "#{service_name}.#{service_namespace}.svc"
             ])
-        ]
+        ],
+        validity: validity
       )
 
     cert_bundle = %{
@@ -378,7 +407,8 @@ defmodule K8sWebhoox do
           service_namespace,
           service_name,
           secret_namespace,
-          secret_name
+          secret_name,
+          validity: validity
         )
 
       {:error, exception} when is_exception(exception) ->
@@ -389,6 +419,25 @@ defmodule K8sWebhoox do
         # coveralls-ignore-next-line
         raise "Secret creation failed."
     end
+  end
+
+  @spec renew_cert_bundle(cert_bundle :: map(), validity :: integer()) :: map()
+  defp renew_cert_bundle(cert_bundle, validity) do
+    %{"ca.pem" => ca_pem, "ca_key.pem" => ca_key_pem, "cert.pem" => cert_pem} = cert_bundle
+    ca = X509.Certificate.from_pem!(ca_pem)
+    ca_key = X509.PrivateKey.from_pem!(ca_key_pem)
+    old_cert = X509.Certificate.from_pem!(cert_pem)
+    public_key = X509.Certificate.public_key(old_cert)
+    subject_rdn = X509.Certificate.subject(old_cert)
+    subject_alt_name = X509.Certificate.extension(old_cert, :subject_alt_name)
+
+    new_cert =
+      X509.Certificate.new(public_key, subject_rdn, ca, ca_key,
+        extension: [subject_alt_name: subject_alt_name],
+        validity: validity
+      )
+
+    Map.put(cert_bundle, "cert.pem", X509.Certificate.to_pem(new_cert))
   end
 
   @spec create_secret(
