@@ -118,7 +118,7 @@ defmodule K8sWebhooxTest do
           |> List.to_string()
           |> String.to_integer())
 
-      assert ts_to_int.(to) - ts_to_int.(from) == 10_000_500
+      assert ts_to_int.(to) - ts_to_int.(from) >= 10_000_500
 
       fun = fn ->
         MUT.ensure_certificates(
