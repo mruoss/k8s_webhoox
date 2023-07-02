@@ -88,23 +88,29 @@ defmodule K8sWebhoox.AdmissionControl.AdmissionReview do
 
   ## Examples
 
-      iex> conn = %K8sWebhoox.Conn{request: %{"object" => %{"spec" => %{"immutable" => "value"}}, "oldObject" => %{"spec" => %{"immutable" => "value"}}}, response: %{}, api_version: "", kind: ""}
+      iex> conn = %K8sWebhoox.Conn{request: %{"operation" => "UPDATE", "object" => %{"spec" => %{"immutable" => "value"}}, "oldObject" => %{"spec" => %{"immutable" => "value"}}}, response: %{}, api_version: "", kind: ""}
       ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_immutable(conn, ["spec", "immutable"])
-      %K8sWebhoox.Conn{request: %{"object" => %{"spec" => %{"immutable" => "value"}}, "oldObject" => %{"spec" => %{"immutable" => "value"}}}, response: %{}, api_version: "", kind: ""}
+      %K8sWebhoox.Conn{request: %{"operation" => "UPDATE", "object" => %{"spec" => %{"immutable" => "value"}}, "oldObject" => %{"spec" => %{"immutable" => "value"}}}, response: %{}, api_version: "", kind: ""}
 
-      iex> conn = %K8sWebhoox.Conn{request: %{"object" => %{"spec" => %{"immutable" => "new_value"}}, "oldObject" => %{"spec" => %{"immutable" => "value"}}}, response: %{}, api_version: "", kind: ""}
+      iex> conn = %K8sWebhoox.Conn{request: %{"operation" => "UPDATE", "object" => %{"spec" => %{"immutable" => "new_value"}}, "oldObject" => %{"spec" => %{"immutable" => "value"}}}, response: %{}, api_version: "", kind: ""}
       ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_immutable(conn, ["spec", "immutable"])
-      %K8sWebhoox.Conn{request: %{"object" => %{"spec" => %{"immutable" => "new_value"}}, "oldObject" => %{"spec" => %{"immutable" => "value"}}}, response: %{"allowed" => false, "status" => %{"code" => 400, "message" => "The field .spec.immutable is immutable."}}, api_version: "", kind: ""}
+      %K8sWebhoox.Conn{request: %{"operation" => "UPDATE", "object" => %{"spec" => %{"immutable" => "new_value"}}, "oldObject" => %{"spec" => %{"immutable" => "value"}}}, response: %{"allowed" => false, "status" => %{"code" => 400, "message" => "The field .spec.immutable is immutable."}}, api_version: "", kind: ""}
+
+      iex> conn = %K8sWebhoox.Conn{request: %{"operation" => "CREATE", "object" => %{"spec" => %{"immutable" => "new_value"}}, "oldObject" => %{}}, response: %{}, api_version: "", kind: ""}
+      ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_immutable(conn, ["spec", "immutable"])
+      %K8sWebhoox.Conn{request: %{"operation" => "CREATE", "object" => %{"spec" => %{"immutable" => "new_value"}}, "oldObject" => %{}}, response: %{}, api_version: "", kind: ""}
   """
   @spec check_immutable(Conn.t(), list()) :: Conn.t()
-  def check_immutable(conn, field) do
-    new_value = get_in(conn.request, ["object" | field])
-    old_value = get_in(conn.request, ["oldObject" | field])
+  def check_immutable(%Conn{request: %{"operation" => "UPDATE"}} = conn, field) do
+    new_value = get_in(conn.request["object"], field)
+    old_value = get_in(conn.request["oldObject"], field)
 
     if new_value == old_value,
       do: conn,
       else: deny(conn, "The field .#{Enum.join(field, ".")} is immutable.")
   end
+
+  def check_immutable(conn, _field), do: conn
 
   @doc """
   Checks the given field's value - if defined - against a list of allowed values. If the field is not defined, the
