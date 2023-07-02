@@ -119,27 +119,33 @@ defmodule K8sWebhoox.AdmissionControl.AdmissionReview do
   ## Examples
 
       iex> conn = %K8sWebhoox.Conn{request: %{"object" => %{"metadata" => %{"annotations" => %{"some/annotation" => "bar"}}, "spec" => %{}}, "oldObject" => %{"spec" => %{}}}, response: %{}, api_version: "", kind: ""}
-      ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_allowed_values(conn, ~w(metadata annotations some/annotation), ["foo", "bar"])
+      ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_allowed_values(conn, ~w(metadata annotations some/annotation), ["foo", "bar"], ".metadata.annotations.some/annotation")
       %K8sWebhoox.Conn{request: %{"object" => %{"metadata" => %{"annotations" => %{"some/annotation" => "bar"}}, "spec" => %{}}, "oldObject" => %{"spec" => %{}}}, response: %{}, api_version: "", kind: ""}
 
       iex> conn = %K8sWebhoox.Conn{request: %{"object" => %{"metadata" => %{}, "spec" => %{}}, "oldObject" => %{"spec" => %{}}}, response: %{}, api_version: "", kind: ""}
-      ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_allowed_values(conn, ~w(metadata annotations some/annotation), ["foo", "bar"])
+      ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_allowed_values(conn, ~w(metadata annotations some/annotation), ["foo", "bar"], ".metadata.annotations.some/annotation")
       %K8sWebhoox.Conn{request: %{"object" => %{"metadata" => %{}, "spec" => %{}}, "oldObject" => %{"spec" => %{}}}, response: %{}, api_version: "", kind: ""}
 
       iex> conn = %K8sWebhoox.Conn{request: %{"object" => %{"metadata" => %{"annotations" => %{"some/annotation" => "other"}}, "spec" => %{}}, "oldObject" => %{"spec" => %{}}}, response: %{}, api_version: "", kind: ""}
-      ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_allowed_values(conn, ~w(metadata annotations some/annotation), ["foo", "bar"])
+      ...> K8sWebhoox.AdmissionControl.AdmissionReview.check_allowed_values(conn, ~w(metadata annotations some/annotation), ["foo", "bar"], ".metadata.annotations.some/annotation")
       %K8sWebhoox.Conn{request: %{"object" => %{"metadata" => %{"annotations" => %{"some/annotation" => "other"}}, "spec" => %{}}, "oldObject" => %{"spec" => %{}}}, response: %{"allowed" => false, "status" => %{"code" => 400, "message" => ~S(The field .metadata.annotations.some/annotation must contain one of the values in ["foo", "bar"] but it's currently set to "other".)}}, api_version: "", kind: ""}
   """
-  @spec check_allowed_values(Conn.t(), list(), list()) :: Conn.t()
-  def check_allowed_values(conn, field, allowed_values) do
-    value = get_in(conn.request, ["object" | field])
+  @spec check_allowed_values(
+          Conn.t(),
+          field :: list(),
+          allowed_values :: list(),
+          field_name :: binary()
+        ) :: Conn.t()
+  def check_allowed_values(conn, field, allowed_values, field_name) do
+    value = get_in(conn.request["object"], field)
 
-    if is_nil(value) or value in allowed_values,
-      do: conn,
-      else:
-        deny(
-          conn,
-          "The field .metadata.annotations.some/annotation must contain one of the values in #{inspect(allowed_values)} but it's currently set to #{inspect(value)}."
-        )
+    if is_nil(value) or value in allowed_values do
+      conn
+    else
+      deny(
+        conn,
+        "The field #{field_name} must contain one of the values in #{inspect(allowed_values)} but it's currently set to #{inspect(value)}."
+      )
+    end
   end
 end

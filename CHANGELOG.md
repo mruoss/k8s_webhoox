@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `K8sWebhoox.AdmissionControl.AdmissionReview.check_immutable/2` - only check `UPDATE` operations.
 
+### Changed
+
+- `K8sWebhoox.AdmissionControl.AdmissionReview.check_allowed_values/4` - Add `field_name` used for error message.
+
 ### Added
 
 - TLS Bootstrap - Renews certificates if they expire within 30 days from now - [#5](https://github.com/mruoss/k8s_webhoox/pull/5)
