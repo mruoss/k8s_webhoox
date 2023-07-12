@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- No new entries below this line! -->
 
+## [0.2.0] - 2023-07-12
+
+TLS secret creation: use keys that correlate with keys in secrets created by cert-manager [#17](https://github.com/mruoss/k8s_webhoox/pull/17)
+
 ## [0.1.1] - 2023-06-02
 
 ### Fixed

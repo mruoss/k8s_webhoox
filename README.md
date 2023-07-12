@@ -16,7 +16,7 @@
 ```elixir
 def deps do
   [
-    {:k8s_webhoox, "~> 0.1.0"}
+    {:k8s_webhoox, "~> 0.2.0"}
   ]
 end
 ```
