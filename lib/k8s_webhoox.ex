@@ -157,7 +157,7 @@ defmodule K8sWebhoox do
            secret_name,
            opts
          ) do
-      {:ok, %{"ca.pem" => ca}} ->
+      {:ok, %{"ca.crt" => ca}} ->
         {:ok, Base.encode64(ca)}
 
       # coveralls-ignore-next-line
@@ -259,11 +259,11 @@ defmodule K8sWebhoox do
     with {:secret, {:ok, secret}} <-
            {:secret, get_secret(conn, secret_namespace, secret_name)},
          {:cert_bundle,
-          %{"key.pem" => _key, "cert.pem" => _cert, "ca_key.pem" => _ca_key, "ca.pem" => _ca} =
+          %{"tls.key" => _key, "tls.crt" => _cert, "ca.key" => _ca_key, "ca.crt" => _ca} =
             cert_bundle} <-
            {:cert_bundle, decode_secret(secret)},
          {:cert_too_old, _, _, false} <-
-           {:cert_too_old, secret, cert_bundle, cert_too_old?(cert_bundle["cert.pem"])} do
+           {:cert_too_old, secret, cert_bundle, cert_too_old?(cert_bundle["tls.crt"])} do
       {:ok, cert_bundle}
     else
       {:secret, {:error, %K8s.Client.APIError{reason: "NotFound"}}} ->
@@ -388,10 +388,10 @@ defmodule K8sWebhoox do
       )
 
     cert_bundle = %{
-      "key.pem" => X509.PrivateKey.to_pem(key),
-      "cert.pem" => X509.Certificate.to_pem(cert),
-      "ca_key.pem" => X509.PrivateKey.to_pem(ca_key),
-      "ca.pem" => X509.Certificate.to_pem(ca)
+      "tls.key" => X509.PrivateKey.to_pem(key),
+      "tls.crt" => X509.Certificate.to_pem(cert),
+      "ca.key" => X509.PrivateKey.to_pem(ca_key),
+      "ca.crt" => X509.Certificate.to_pem(ca)
     }
 
     case create_secret(conn, secret_namespace, secret_name, cert_bundle) do
@@ -423,7 +423,7 @@ defmodule K8sWebhoox do
 
   @spec renew_cert_bundle(cert_bundle :: map(), validity :: integer()) :: map()
   defp renew_cert_bundle(cert_bundle, validity) do
-    %{"ca.pem" => ca_pem, "ca_key.pem" => ca_key_pem, "cert.pem" => cert_pem} = cert_bundle
+    %{"ca.crt" => ca_pem, "ca.key" => ca_key_pem, "tls.crt" => cert_pem} = cert_bundle
     ca = X509.Certificate.from_pem!(ca_pem)
     ca_key = X509.PrivateKey.from_pem!(ca_key_pem)
     old_cert = X509.Certificate.from_pem!(cert_pem)
@@ -437,7 +437,7 @@ defmodule K8sWebhoox do
         validity: validity
       )
 
-    Map.put(cert_bundle, "cert.pem", X509.Certificate.to_pem(new_cert))
+    Map.put(cert_bundle, "tls.crt", X509.Certificate.to_pem(new_cert))
   end
 
   @spec create_secret(
