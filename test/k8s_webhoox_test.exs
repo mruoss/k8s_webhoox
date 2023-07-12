@@ -58,10 +58,10 @@ defmodule K8sWebhooxTest do
 
       assert %{
                "data" => %{
-                 "ca.pem" => _,
-                 "ca_key.pem" => _,
-                 "cert.pem" => _,
-                 "key.pem" => _
+                 "ca.crt" => _,
+                 "ca.key" => _,
+                 "tls.crt" => _,
+                 "tls.key" => _
                }
              } = secret
     end
@@ -99,7 +99,7 @@ defmodule K8sWebhooxTest do
           validity: 10
         )
 
-      {:ok, %{"data" => %{"cert.pem" => cert_pem}}} =
+      {:ok, %{"data" => %{"tls.crt" => cert_pem}}} =
         K8s.Client.get("v1", "Secret", namespace: "default", name: "tls-certificates-validity")
         |> K8s.Client.put_conn(conn)
         |> K8s.Client.run()
@@ -132,7 +132,7 @@ defmodule K8sWebhooxTest do
 
       assert(capture_log(fun) =~ "Certificate is too old. Renewing it")
 
-      {:ok, %{"data" => %{"cert.pem" => cert_pem}}} =
+      {:ok, %{"data" => %{"tls.crt" => cert_pem}}} =
         K8s.Client.get("v1", "Secret", namespace: "default", name: "tls-certificates-validity")
         |> K8s.Client.put_conn(conn)
         |> K8s.Client.run()
