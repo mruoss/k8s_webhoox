@@ -50,7 +50,7 @@ defmodule K8sWebhoox.MixProject do
       {:dialyxir, "~> 1.2", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
-      {:excoveralls, "~> 0.16", only: :test}
+      {:excoveralls, "~> 0.17", only: :test}
     ]
   end
 
