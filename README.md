@@ -118,7 +118,7 @@ the implementation of a resource conversion webhook request handler.
 
 ```elixir
 defmodule MyOperator.ResourceConversionHandler do
-  use K8sWebhoox.AdmissionControl.Handler
+  use K8sWebhoox.ResourceConversion.Handler
 
   def convert(
           %{"apiVersion" => "example.com/v1beta1", "kind" => "MyResource"} = resource,
