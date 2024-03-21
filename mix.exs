@@ -1,11 +1,13 @@
 defmodule K8sWebhoox.MixProject do
   use Mix.Project
+
+  @app :k8s_webhoox
   @version "0.2.0"
   @source_url "https://github.com/mruoss/k8s_webhoox"
 
   def project do
     [
-      app: :k8s_webhoox,
+      app: @app,
       description: description(),
       version: @version,
       elixir: "~> 1.12",
@@ -75,12 +77,13 @@ defmodule K8sWebhoox.MixProject do
 
   defp package do
     [
-      name: :k8s_webhoox,
+      name: @app,
       maintainers: ["Michael Ruoss"],
       licenses: ["Apache"],
       links: %{
-        "Changelog" => "#{@source_url}/blob/main/CHANGELOG.md",
-        "GitHub" => @source_url
+        "Changelog" => "https://hexdocs.pm/#{@app}/changelog.html",
+        "GitHub" => @source_url,
+        "Sponsor" => "https://github.com/sponsors/mruoss"
       },
       files: ["lib", "mix.exs", "README.md", "LICENSE", "CHANGELOG.md"]
     ]
