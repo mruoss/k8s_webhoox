@@ -12,6 +12,6 @@ jobs:
       with-kubernetes: true
       check-formatting: true
       run-credo: strict
-      run-dialyter: true
+      run-dialyzer: true
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
