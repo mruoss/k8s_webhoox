@@ -6,6 +6,20 @@ defmodule K8sWebhooxTest do
   import ExUnit.CaptureLog
   import YamlElixir.Sigil
 
+  @dummy_cert """
+              -----BEGIN CERTIFICATE-----
+              MIIBczCCARmgAwIBAgIUWFceRftDPs5uwudLK+oJWuMVzRYwCgYIKoZIzj0EAwIw
+              DzENMAsGA1UEAwwETXlDQTAeFw0yNTA0MTgwNzM5MDNaFw0zNTA0MTYwNzM5MDNa
+              MA8xDTALBgNVBAMMBE15Q0EwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQNlMDX
+              ZMNZPYzZnPml1qQ6YscmdNNxJGxztEF5GN15EEDtysznZ/mBa9zJ0T2JnF4juhjV
+              +YDWU1uIDRi3t3J6o1MwUTAdBgNVHQ4EFgQUkwBownwIX2SAsqD7I+FnhLWI+w8w
+              HwYDVR0jBBgwFoAUkwBownwIX2SAsqD7I+FnhLWI+w8wDwYDVR0TAQH/BAUwAwEB
+              /zAKBggqhkjOPQQDAgNIADBFAiEAxotf50VpiLnfq2IvNF+T+0ZcUBUUhmWX0OXB
+              juYQXJ4CICJv83uuSvBmRbZoqhcch69IIVhGM9lyCE8pp1gxnPKw
+              -----END CERTIFICATE-----
+              """
+              |> Base.encode64()
+
   setup_all do
     {:ok, conn} =
       "KUBECONFIG"
@@ -203,7 +217,7 @@ defmodule K8sWebhooxTest do
       |> K8s.Client.put_conn(conn)
       |> K8s.Client.wait_until(find: ["status"], eval: &(not is_nil(&1)))
 
-      ca_bundle_base_64 = Base.encode64("some-ca-bundle")
+      ca_bundle_base_64 = @dummy_cert
 
       assert :ok ==
                MUT.update_crd_conversion_configs(

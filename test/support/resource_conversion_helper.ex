@@ -1,6 +1,5 @@
 defmodule K8sWebhoox.Test.ResourceConversionHelper do
   @moduledoc false
-  use Plug.Test
 
   @spec webhook_request(api_version :: binary(), objects :: list(map())) :: map()
   def webhook_request(desired_api_version, objects) do

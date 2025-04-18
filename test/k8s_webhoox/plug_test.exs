@@ -1,6 +1,5 @@
 defmodule K8sWebhoox.PlugTest do
   use ExUnit.Case, async: true
-  use Plug.Test
 
   alias K8sWebhoox.Plug, as: MUT
 

@@ -13,3 +13,5 @@ jobs:
       check-formatting: true
       run-credo: strict
       run-dialyter: true
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}

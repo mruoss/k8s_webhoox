@@ -19,6 +19,7 @@ defmodule K8sWebhoox.ResourceConversion.HandlerTest do
     @first_kind "FirstResource"
     @second_kind "SecondResource"
 
+    @impl true
     def convert(
           %{"apiVersion" => @api_version, "kind" => @first_kind} = object,
           @desired_api_version

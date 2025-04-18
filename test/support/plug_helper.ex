@@ -1,6 +1,7 @@
 defmodule K8sWebhoox.Test.PlugHelepr do
   @moduledoc false
-  use Plug.Test
+  import Plug.Test
+  import Plug.Conn
 
   @spec webhook_request_conn(body :: map()) :: Plug.Conn.t()
   def webhook_request_conn(body) do
