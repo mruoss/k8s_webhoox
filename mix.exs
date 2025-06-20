@@ -47,7 +47,7 @@ defmodule K8sWebhoox.MixProject do
       {:k8s, "~> 2.0"},
       {:plug, "~> 1.0"},
       {:pluggable, "~> 1.0"},
-      {:x509, "~> 0.8.5"},
+      {:x509, "~> 0.9.0"},
       {:yaml_elixir, "~> 2.0"},
       {:dialyxir, "~> 1.2", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
