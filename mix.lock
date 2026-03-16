@@ -22,7 +22,7 @@
   "plug_crypto": {:hex, :plug_crypto, "2.1.1", "19bda8184399cb24afa10be734f84a16ea0a2bc65054e23a62bb10f06bc89491", [:mix], [], "hexpm", "6470bce6ffe41c8bd497612ffde1a7e4af67f36a15eea5f921af71cf3e11247c"},
   "pluggable": {:hex, :pluggable, "1.1.0", "7eba3bc70c0caf4d9056c63c882df8862f7534f0145da7ab3a47ca73e4adb1e4", [:mix], [], "hexpm", "d12eb00ea47b21e92cd2700d6fbe3737f04b64e71b63aad1c0accde87c751637"},
   "poolboy": {:hex, :poolboy, "1.5.2", "392b007a1693a64540cead79830443abf5762f5d30cf50bc95cb2c1aaafa006b", [:rebar3], [], "hexpm", "dad79704ce5440f3d5a3681c8590b9dc25d1a561e8f5a9c995281012860901e3"},
-  "telemetry": {:hex, :telemetry, "1.4.0", "69aa83d53f152f93f05fd40b77ded6fab247de093b7a3c4ca2879e634144446e", [:rebar3], [], "hexpm", "d1ff426f988ac1092f9d684d34d08e51042a70567c16be793fbc8f399fd2e77d"},
+  "telemetry": {:hex, :telemetry, "1.4.1", "ab6de178e2b29b58e8256b92b382ea3f590a47152ca3651ea857a6cae05ac423", [:rebar3], [], "hexpm", "2172e05a27531d3d31dd9782841065c50dd5c3c7699d95266b2edd54c2dafa1c"},
   "x509": {:hex, :x509, "0.9.2", "a75aa605348abd905990f3d2dc1b155fcde4e030fa2f90c4a91534405dce0f6e", [:mix], [], "hexpm", "4c5ede75697e565d4b0f5be04c3b71bb1fd3a090ea243af4bd7dae144e48cfc7"},
   "yamerl": {:hex, :yamerl, "0.10.0", "4ff81fee2f1f6a46f1700c0d880b24d193ddb74bd14ef42cb0bcf46e81ef2f8e", [:rebar3], [], "hexpm", "346adb2963f1051dc837a2364e4acf6eb7d80097c0f53cbdc3046ec8ec4b4e6e"},
   "yaml_elixir": {:hex, :yaml_elixir, "2.12.1", "d74f2d82294651b58dac849c45a82aaea639766797359baff834b64439f6b3f4", [:mix], [{:yamerl, "~> 0.10", [hex: :yamerl, repo: "hexpm", optional: false]}], "hexpm", "d9ac16563c737d55f9bfeed7627489156b91268a3a21cd55c54eb2e335207fed"},
