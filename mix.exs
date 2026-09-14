@@ -14,23 +14,24 @@ defmodule K8sWebhoox.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      preferred_cli_env: cli_env(),
       test_coverage: [tool: ExCoveralls],
       docs: docs(),
       package: package()
     ]
   end
 
-  defp cli_env do
+  def cli do
     [
-      coveralls: :test,
-      "coveralls.detail": :test,
-      "coveralls.post": :test,
-      "coveralls.html": :test,
-      "coveralls.travis": :test,
-      "coveralls.github": :test,
-      "coveralls.xml": :test,
-      "coveralls.json": :test
+      preferred_envs: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test,
+        "coveralls.travis": :test,
+        "coveralls.github": :test,
+        "coveralls.xml": :test,
+        "coveralls.json": :test
+      ]
     ]
   end
 

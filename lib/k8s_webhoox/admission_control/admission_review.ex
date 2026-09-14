@@ -8,8 +8,6 @@ defmodule K8sWebhoox.AdmissionControl.AdmissionReview do
   request.
   """
 
-  require Logger
-
   alias K8sWebhoox.Conn
 
   @doc """
